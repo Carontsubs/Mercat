@@ -2,6 +2,7 @@
 
 import random
 import sys
+import math
 
 # ESTAT GLOBAL DEL JOC (Aquí resideixen totes les dades)
 ESTAT_JOC = {
@@ -76,12 +77,16 @@ def fase_de_mercat():
     ESTAT_JOC["efectiu"] += guany_total
 
     print(f"\n--- Resultats de l'Avaluació ---")
-    print(f"| Guany Ticker A (Base + Bonus): +{guany_ticker_a_base + bonus_a} €")
+    
+    # LÍNIA CORREGIDA per al desglossament:
+    if bonus_a > 0:
+        print(f"| Guany Ticker A: {guany_ticker_a_base} € (Base) + {bonus_a} € (Diversificat) = +{guany_ticker_a_base + bonus_a} €")
+    else:
+        print(f"| Guany Ticker A: +{guany_ticker_a_base} €") # Versió simple si no hi ha bonus
     print(f"| Guany Ticker B: {guany_ticker_b} €")
     print(f"| Efectiu abans de CO: {ESTAT_JOC['efectiu']} €")
-
-    # 2. Pagament de Costos Operatius (CO)
     
+    # 2. Pagament de Costos Operatius (CO)
     # Costos definitius: 8 € al Cicle I, 4 € al Cicle II i III (per Broker)
     cost_base = 0
     cicle = obtenir_cicle_actual()
@@ -103,16 +108,24 @@ def fase_de_mercat():
         ESTAT_JOC["efectiu"] -= cost_operatiu_total
         print(f"✅ CO pagat ({cost_operatiu_total} €). Efectiu restant: {ESTAT_JOC['efectiu']} €")
     else:
-        # Penalització per no poder pagar
-        ESTAT_JOC["deute_tokens"] += 1
-        nou_deute_total = ESTAT_JOC["deute_tokens"] # <-- Variable per a la claredat
+        # Penalització per no poder pagar (LÒGICA MODIFICADA)
+        deute_pendent = cost_operatiu_total - ESTAT_JOC["efectiu"] # Quantitat que falta
+        
+        # 1. Càlcul de tokens adquirits
+        # math.ceil(deute_pendent / 3)
+        tokens_adquirits = int(math.ceil(deute_pendent / 3)) 
+        
+        # 2. Aplicació al total
+        ESTAT_JOC["deute_tokens"] += tokens_adquirits
+        
+        # 3. Reinici d'efectiu
         ESTAT_JOC["efectiu"] = 0 # L'efectiu es reinicia a zero
-        print(f"❌ NO S'HA POGUT PAGAR CO! ({cost_operatiu_total} €). Deute adquirit.")
-        print(f"   Tokens de Deute actuals: {nou_deute_total} (Penalització VN: -{nou_deute_total*3} €)") # <-- Missatge més clar 
-    
-    # 3. Avançament del Cicle
-    if cicle < 3 and ESTAT_JOC["torn_actual"] in [4, 7]:
-        ESTAT_JOC["cicle_actual"] += 1 
+        
+        # Missatges
+        nou_deute_total = ESTAT_JOC["deute_tokens"] 
+        print(f"❌ NO S'HA POGUT PAGAR CO! ({cost_operatiu_total} €). Deute pendent: {deute_pendent} €")
+        print(f"   Tokens de Deute adquirits: {tokens_adquirits}")
+        print(f"   Tokens de Deute actuals: {nou_deute_total} (Penalització VN: -{nou_deute_total*3} €)") # <-- Missatge més clar
 
 def finalitzar_torn():
     """Gestiona el final de cada torn."""
@@ -120,7 +133,6 @@ def finalitzar_torn():
     if ESTAT_JOC["torn_actual"] in [4, 7, 9]:
         print("\n--- INICI FASE DE MERCAT (COLLITA) ---")
         fase_de_mercat()
-        print("--- FINAL FASE DE MERCAT ---\n")
 
     if ESTAT_JOC["torn_actual"] < 9:
         # Avançar al següent torn

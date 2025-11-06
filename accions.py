@@ -48,8 +48,8 @@ def prestec_rapid():
     if usar_ap(1):
         guany_immediat = 5
         regles.ESTAT_JOC["efectiu"] += guany_immediat
-        regles.ESTAT_JOC["deute_tokens"] += 1
-        print(f"💸 Acció realitzada: Préstec Ràpid. Guanyes {guany_immediat} € i obtens 1 Deute.")
+        regles.ESTAT_JOC["deute_tokens"] += 2
+        print(f"💸 Acció realitzada: Préstec Ràpid. Guanyes {guany_immediat} € i obtens 2 de Deute.")
     else:
         return
 

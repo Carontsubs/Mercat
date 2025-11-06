@@ -45,7 +45,7 @@ def mostrar_estat_i_opcions(accio_bloquejada):
     print("\n" + "="*70)
     print(f"| 📊 ESTAT ACTUAL | TORN: {estat['torn_actual']} / CICLE: {regles.obtenir_cicle_actual()} | AP: {estat['punts_accio_disponibles']} |")
     print("-" * 70)
-    print(f"| 👨‍💼 BROKERS: {estat['brokers']} | 💰 EFECTIU: {estat['efectiu']} € | DEUTES: {estat['deute_tokens']} (PENALITZACIÓ: -{estat['deute_tokens']*3} VN) |")
+    print(f"| 👨‍💼 BROKERS: {estat['brokers']} | 💰 EFECTIU: {estat['efectiu']} € | DEUTES: {estat['deute_tokens']} (PENALITZACIÓ: -{estat['deute_tokens']*3} VN) |")    
     print(f"| 📈 ACCIONS: Ticker A: {estat['accions']['A']}, Ticker B: {estat['accions']['B']}")
     print(f"| 🛠️ ESTRATÈGIES: {', '.join(estat['estrategies']) if estat['estrategies'] else 'Cap'}")
     print("=" * 70)
