@@ -31,16 +31,17 @@ def obtenir_opcions_disponibles():
     
     # S'obre "Desenvolupament" al Torn 5
     if regles.ESTAT_JOC["torn_actual"] >= 5:
-        opcions["5"] = {"nom": "Desenvolupament", "cost": 2, "func": accions.comprar_desenvolupament}
+        opcions["5"] = {"nom": "Desenvolupament", "cost": 1, "func": accions.comprar_desenvolupament}
     
     return opcions
 
 
+# main.py - FUNCIÓ CORREGIDA (substitueix l'actual)
 def mostrar_estat_i_opcions(accio_bloquejada):
     """Mostra l'estat actual del joc i les opcions per al jugador."""
     estat = regles.ESTAT_JOC
     
-    # --- Mostrar Estat ---
+    # ... (Mostra Estat - Sense canvis aquí)
     print("\n" + "="*70)
     print(f"| 📊 ESTAT ACTUAL | TORN: {estat['torn_actual']} / CICLE: {regles.obtenir_cicle_actual()} | AP: {estat['punts_accio_disponibles']} |")
     print("-" * 70)
@@ -57,15 +58,23 @@ def mostrar_estat_i_opcions(accio_bloquejada):
     print("\n--- ACCIONS DISPONIBLES (SELECCIONA EL NÚMERO) ---")
     opcions = obtenir_opcions_disponibles()
     
+    # Lògica Corregida d'Impressió
     for clau, detalls in opcions.items():
-        bloquejada = " [BLOQUEJADA 🛑]" if detalls["nom"] == accio_bloquejada else ""
-        ap_disponibles = f" (Cost: {detalls['cost']} AP)"
+        es_bloquejada = detalls["nom"] == accio_bloquejada
+        ap_info = f" (Cost: {detalls['cost']} AP)"
         
-        # Només mostra l'opció si el jugador té prou AP
-        if detalls["cost"] <= estat["punts_accio_disponibles"]:
-            print(f"{clau}: {detalls['nom']}{ap_disponibles}{bloquejada}")
-
-
+        # Condició d'Impressió: Només mostra l'opció si:
+        # 1. Està disponible (AP >= Cost)
+        # 2. O, si està bloquejada (La volem veure, encara que no la puguem usar)
+        
+        if es_bloquejada:
+            # CAS 1: Bloquejada. Sempre la mostrem amb l'etiqueta 🛑
+            print(f"{clau}: {detalls['nom']}{ap_info} [BLOQUEJADA 🛑]")
+            
+        elif detalls["cost"] <= estat["punts_accio_disponibles"]:
+            # CAS 2: Disponible i es pot pagar.
+            print(f"{clau}: {detalls['nom']}{ap_info}")
+            
 def bucle_principal():
     """El bucle principal que gestiona la progressió del joc i la interacció."""
     print("--- INICI DEL JOC: Mercat Limit Solitari (9 Torns, Risc Agrícola) ---")

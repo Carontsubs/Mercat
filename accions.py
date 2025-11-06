@@ -63,7 +63,7 @@ def comprar_desenvolupament():
         return
 
     # Comprovació d'AP
-    if usar_ap(2):
+    if usar_ap(1):
         
         # Opcions de cartes (amb els seus costos definits)
         cartes = {
@@ -77,12 +77,12 @@ def comprar_desenvolupament():
             print(f"{clau}: {c['nom']} (Cost: {c['cost']} €) - Efecte: {c['efecte']}")
 
         while True:
-            
             eleccio = input("Selecciona carta (1-3) o 's' per sortir: ").lower() # AFEGIT 's'
             
             if eleccio == 's': # NOVA CONDICIÓ DE SORTIDA
                 print("❌ Surt de la compra d'Estratègies.")
-                regles.ESTAT_JOC["punts_accio_disponibles"] += 2 # Retorna els AP gastats
+                regles.ESTAT_JOC["punts_accio_disponibles"] += 1 # Retorna els AP gastats
+                print(f"DEBUG AP: {regles.ESTAT_JOC['punts_accio_disponibles']} AP (hauria de ser 1)") # <-- AFEGEIX AIXÒ
                 return # Tanca la funció i evita el bloqueig
             
             carta_tria = cartes.get(eleccio)

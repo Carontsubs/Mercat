@@ -15,7 +15,7 @@ ESTAT_JOC = {
 
     # Capacitat Operativa (Brokers)
     "brokers": 1,
-    "punts_accio_disponibles": 2, # Es calcula: brokers * 2
+    "punts_accio_disponibles": 1, # Es calcula: brokers * 2
 
     # Actius d'Inversió
     "accions": {"A": 0, "B": 0},
@@ -55,33 +55,49 @@ def avaluar_ticker_b(quantitat_accions):
 
     return guany_total
 
+# regles.py
+
+# ... (resta del codi)
+
 def fase_de_mercat():
     """Executada al final dels Torns 4, 7 i 9. Avaluació d'actius i Pagament de CO."""
     
-    # 1. Càlcul de Dividends/Avaluació
-    guany_ticker_a = ESTAT_JOC["accions"]["A"] * 1  # Ticker A: +1 € fix
+    # 1. Càlcul de Dividends/Avaluació (inclou el guany base del Ticker A)
+    guany_ticker_a_base = ESTAT_JOC["accions"]["A"] * 1
     guany_ticker_b = avaluar_ticker_b(ESTAT_JOC["accions"]["B"])
     
-    guany_total = guany_ticker_a + guany_ticker_b
+    # --- Aplicació d'Estratègies: GUANY ---
+    bonus_a = 0
+    if "Fons Diversificat" in ESTAT_JOC["estrategies"]:
+        bonus_a = ESTAT_JOC["accions"]["A"] * 1
+        print(f"📈 Estratègia 'Fons Diversificat' activa: +{bonus_a} € (bonus Ticker A)")
+
+    guany_total = guany_ticker_a_base + bonus_a + guany_ticker_b
     ESTAT_JOC["efectiu"] += guany_total
 
     print(f"\n--- Resultats de l'Avaluació ---")
-    print(f"| Guany Ticker A: +{guany_ticker_a} €")
+    print(f"| Guany Ticker A (Base + Bonus): +{guany_ticker_a_base + bonus_a} €")
     print(f"| Guany Ticker B: {guany_ticker_b} €")
     print(f"| Efectiu abans de CO: {ESTAT_JOC['efectiu']} €")
 
     # 2. Pagament de Costos Operatius (CO)
     
-    # Costos definitius: 12 € al Cicle I, 4 € al Cicle II i III (per Broker)
+    # Costos definitius: 8 € al Cicle I, 4 € al Cicle II i III (per Broker)
     cost_base = 0
     cicle = obtenir_cicle_actual()
     
     if cicle == 1:
-        cost_base = 12
+        cost_base = 8 # CO nou
     else:
         cost_base = 4
-    
-    cost_operatiu_total = cost_base * ESTAT_JOC["brokers"]
+        
+    # --- Aplicació d'Estratègies: COST ---
+    reduccio_co = 0
+    if "Algoritme Alta Freqüència" in ESTAT_JOC["estrategies"]:
+        reduccio_co = ESTAT_JOC["brokers"] * 1 # Redueix 1 € per Broker
+        print(f"⬇️ Estratègia 'Algoritme Alta Freqüència' activa: CO reduït en {reduccio_co} €")
+
+    cost_operatiu_total = (cost_base * ESTAT_JOC["brokers"]) - reduccio_co
 
     if ESTAT_JOC["efectiu"] >= cost_operatiu_total:
         ESTAT_JOC["efectiu"] -= cost_operatiu_total
@@ -89,11 +105,14 @@ def fase_de_mercat():
     else:
         # Penalització per no poder pagar
         ESTAT_JOC["deute_tokens"] += 1
+        nou_deute_total = ESTAT_JOC["deute_tokens"] # <-- Variable per a la claredat
         ESTAT_JOC["efectiu"] = 0 # L'efectiu es reinicia a zero
-        print(f"❌ NO S'HA POGUT PAGAR CO! ({cost_operatiu_total} €). Deute adquirit. Nou Deute Total: {ESTAT_JOC['deute_tokens']}")
-        
+        print(f"❌ NO S'HA POGUT PAGAR CO! ({cost_operatiu_total} €). Deute adquirit.")
+        print(f"   Tokens de Deute actuals: {nou_deute_total} (Penalització VN: -{nou_deute_total*3} €)") # <-- Missatge més clar 
+    
     # 3. Avançament del Cicle
-    ESTAT_JOC["cicle_actual"] += 1
+    if cicle < 3 and ESTAT_JOC["torn_actual"] in [4, 7]:
+        ESTAT_JOC["cicle_actual"] += 1 
 
 def finalitzar_torn():
     """Gestiona el final de cada torn."""
@@ -107,22 +126,36 @@ def finalitzar_torn():
         # Avançar al següent torn
         ESTAT_JOC["torn_actual"] += 1
         # Reiniciar AP al total de Brokers * 2
-        ESTAT_JOC["punts_accio_disponibles"] = ESTAT_JOC["brokers"] * 2
+        ESTAT_JOC["punts_accio_disponibles"] = ESTAT_JOC["brokers"] * 1
     else:
         # Fi del joc
         calcular_valor_net_final()
         sys.exit() # Cal afegir 'import sys' aquí si el vols tancar
 
+# regles.py - Funció calcular_valor_net_final() CORREGIDA
+
 def calcular_valor_net_final():
     """Calcula la puntuació final (VN)."""
-    # Valoració simple dels actius: 1 € per acció
-    vn_accions = ESTAT_JOC["accions"]["A"] * 1 + ESTAT_JOC["accions"]["B"] * 1
-    penalitzacio_deute = ESTAT_JOC["deute_tokens"] * 3
     
-    # La valoració final pot ser més complexa (p. ex., bonus per cartes),
-    # però aquí utilitzem la base.
+    # 1. Valoració dels Actius (Accions)
+    # Valoració simple: 1 € per acció A i B
+    vn_accions = ESTAT_JOC["accions"]["A"] * 1 + ESTAT_JOC["accions"]["B"] * 1
+    
+    # 2. Penalització per Deute
+    tokens_deute = ESTAT_JOC["deute_tokens"]
+    penalitzacio_deute = tokens_deute * 3 # 3 € per cada token
+    
+    # 3. Suma final
+    # VN = Efectiu + Valor Accions - Penalització Deute
     vn_final = ESTAT_JOC["efectiu"] + vn_accions - penalitzacio_deute
     
-    print("\n=============================================")
+    # --- Mostrar Detall Final ---
+    print("\n--- DETALL DE LA PUNTUACIÓ FINAL (VN) ---")
+    print(f"| Efectiu final: {ESTAT_JOC['efectiu']} €")
+    print(f"| Valor d'Accions: {vn_accions} €")
+    print(f"| Penalització Deute ({tokens_deute} tokens): -{penalitzacio_deute} €")
+    print("-" * 43)
+    
     print(f"| JOC FINALITZAT! VALOR NET (VN) FINAL: {vn_final} € |")
     print("=============================================\n")
+    
