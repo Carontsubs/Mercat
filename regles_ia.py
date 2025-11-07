@@ -39,7 +39,11 @@ def inicialitzar_joc():
         
         # Estratègies (Cartes de Desenvolupament)
         "estrategies": [],
+
+        # 🛑 CORRECCIÓ CLAU: Nova llista per registrar accions base
+        "accions_executades": [], # ⬅️ AFEGIR AQUÍ
     }
+
     global SILENT_MODE
     SILENT_MODE = False
 

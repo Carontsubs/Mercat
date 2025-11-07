@@ -80,49 +80,72 @@ def contractar_broker():
     return False
 
 # 6. Desenvolupament (Cost: 2 AP, tria automàtica en simulació)
+
+# accions_ia.py (Funció comprar_desenvolupament amb lògica d'IA)
+
 def comprar_desenvolupament():
-    """2 AP compra una Carta d'Estratègia amb tria automàtica en simulació."""
+    """
+    Consumeix 1 AP per comprar una Carta d'Estratègia amb tria AUTOMÀTICA estratègica:
+    1. Prioritza 'Fons Diversificat' si Accions A >= 3.
+    2. Altrament, Prioritza 'Analista Junior'.
+    """
     
-    # Comprovació de Fase
-    if regles.ESTAT_JOC["torn_actual"] < 5:
-        if not regles.SILENT_MODE:
-            print("🛑 L'acció de Desenvolupament no està disponible fins al Torn 5.")
+    # 🛑 NOTA: Aquesta funció ha de consumir 1 AP si l'acció es realitza amb èxit.
+    
+    # Variables d'estat
+    efectiu = regles.ESTAT_JOC["efectiu"]
+    accions_a = regles.ESTAT_JOC["accions"]["A"]
+    brokers = regles.ESTAT_JOC["brokers"]
+    
+    # 1. Comprovar si hi ha alguna carta disponible i pagable (assumint CARTES_DESENVOLUPAMENT existeix)
+    cartes_pagables = [
+         c for c in CARTES_DESENVOLUPAMENT.values() 
+         if efectiu >= c['cost']
+    ]
+
+    if not cartes_pagables:
+        # No hi ha cartes pagables, l'acció falla i no consumeix AP
         return False
 
-    # Comprovació d'AP (COST FIXAT A 2 AP)
-    if usar_ap(2): 
-        
-        # --- LÒGICA DE TRIA D'IA (SIMULACIÓ) ---
-        
-        # Filtrar cartes que l'IA pot pagar
-        cartes_pagables = [
-            c for c in CARTES_DESENVOLUPAMENT.values() 
-            if regles.ESTAT_JOC["efectiu"] >= c['cost']
-        ]
-
-        if not cartes_pagables:
-            # Si no pot pagar res, l'IA no compra.
-            if not regles.SILENT_MODE:
-                print("❌ No hi ha fons per comprar cap carta de Desenvolupament.")
-            return False
-
-        # Trieu una carta aleatòriament (Estratègia d'IA Base)
+    carta_tria = None
+    
+    # --- LÒGICA DE TRIA D'IA ESTRATÈGICA ---
+    
+    # 2. PRIORITAT 1: FONS DIVERSIFICAT (Si es compleix la condició de 3+ Accions A)
+    fons_diversificat = next((c for c in cartes_pagables if c['nom'] == "Fons Diversificat"), None)
+    
+    if fons_diversificat and accions_a >= 4:
+        carta_tria = fons_diversificat
+    
+    # 3. PRIORITAT 2: ANALISTA JUNIOR (Si no s'ha triat Fons Diversificat)
+    if not carta_tria:
+         analista_junior = next((c for c in cartes_pagables if c['nom'] == "Analista Junior"), None)
+         if analista_junior and brokers < 3:
+             carta_tria = analista_junior
+             
+    # 4. TRIA FINAL (Si encara no s'ha triat, pot triar l'Algoritme si és l'únic que queda)
+    if not carta_tria:
+        # Triar a l'atzar entre les pagables com a últim recurs.
         carta_tria = random.choice(cartes_pagables)
-        
-        # 3. Execució de la compra
-        cost_carta = carta_tria['cost']
-        nom_carta = carta_tria['nom']
-        
-        regles.ESTAT_JOC["efectiu"] -= cost_carta
-        regles.ESTAT_JOC["estrategies"].append(nom_carta)
-        
-        # Aplicació immediata de l'efecte del Broker
-        if nom_carta == "Analista Junior":
-            regles.ESTAT_JOC["brokers"] += 1
-        
-        if not regles.SILENT_MODE:
-            print(f"✅ Has comprat: {nom_carta}. (-{cost_carta} €)")
-        
-        return True
 
-    return False
+    # --- EXECUCIÓ DE LA COMPRA (Si s'ha triat una carta) ---
+    
+    if carta_tria:
+        # Consumir AP (Ho has de gestionar amb la funció 'usar_ap')
+        if not usar_ap(1):
+            return False # Falla si no hi ha AP, tot i que la lògica de l'IA ja ho hauria d'haver filtrat
+            
+        # 1. Aplicar Cost
+        regles.ESTAT_JOC["efectiu"] -= carta_tria['cost']
+        
+        # 2. Afegir a Estratègies (per al comptador final)
+        regles.ESTAT_JOC["estrategies"].append(carta_tria['nom'])
+        
+        # 3. Aplicar Efecte (Només l'Analista Junior augmenta el Broker)
+        if carta_tria['nom'] == "Analista Junior":
+             regles.ESTAT_JOC["brokers"] += 1
+        
+        # 4. Retornar èxit (Crucial per al Tallafoc d'AP a simulador_ia.py)
+        return True # Retorna True per indicar èxit
+            
+    return False # Retorna Fals si no s'ha pogut triar ni executar cap carta
