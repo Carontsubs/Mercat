@@ -1,47 +1,35 @@
-import regles
+import regles_ia as regles
 import random
 import time
 from collections import Counter
+import accions_ia as accions
 
 # --- ESTRATÈGIA D'IA BASE (ALEATÒRIA) ---
 
 def accio_ia_base():
-    """L'IA executa una acció aleatòria basada en els AP disponibles."""
     
-    punts_accio = regles.ESTAT_JOC["punts_accio_disponibles"]
-    
-    if punts_accio <= 0:
-        return # No es pot fer res
+    if regles.ESTAT_JOC["punts_accio_disponibles"] <= 0:
+        return 
 
-    # Opcions d'acció amb el seu cost d'AP. 
-    # Notem que comprar accions i desenvolupament pot costar 1 o 2 AP.
-    # Assumim aquí que totes les accions costen 1 AP per simplicitat en la prova base.
-    
+    # 🛑 Aquesta llista ha d'utilitzar els noms de les funcions reals a accions.py
+    # La IA BASE només tria accions que existeixen i consumeixen AP.
     accions_possibles = [
-        "comprar_accions_a", 
-        "comprar_accions_b",
-        "contractar_broker",
-        # Inclou altres accions que costin 1 AP, com ara comprar desenvolupament (si costa 1 AP).
-        "prestec_rapid" # Aquesta acció no gasta AP, però és una acció vàlida.
+        accions.comprar_accions_a, 
+        accions.comprar_accions_b,
+        accions.prestec_rapid,
+        accions.comprar_desenvolupament,
+        accions.ingresar_basic # Afegim l'acció d'Ingrés Bàsic
+        # NOTE: Si contractar_broker és només un efecte de carta, l'eliminem d'aquí.
     ]
 
-    # L'IA només tria una acció si té AP.
-    if regles.ESTAT_JOC["punts_accio_disponibles"] > 0:
-        # Trieu una acció aleatòria entre les que costen 1 AP o no costen AP
-        accio_escollida = random.choice(accions_possibles)
-        
-        # NOTE: Aquí normalment cridaríem a la funció corresponent del mòdul accions.py
-        # Per simplificar la prova base, simulem el cost d'AP.
-        
-        if accio_escollida == "prestec_rapid":
-            # La funció prestec_rapid() no gasta AP però guanya diners i genera deute.
-            # Hauries de cridar: accions.prestec_rapid()
-            pass # Implementació simplificada
-        else:
-            # Per a la prova base, només gastem 1 AP per simular la compra/contractació.
-            # En el teu codi real, caldria la lògica de accions.py
-            regles.ESTAT_JOC["punts_accio_disponibles"] -= 1
-
+    # Trieu i executeu una funció d'acció aleatòria
+    funcio_escollida = random.choice(accions_possibles)
+    
+    # 💥 EXECUCIÓ 💥
+    # Com que cada funció gestiona el seu propi consum d'AP internament,
+    # el bucle es trencarà quan s'esgotin els AP.
+    funcio_escollida() 
+    
     return
 
 # --- BUCLE DE SIMULACIÓ ---

@@ -1,4 +1,4 @@
-# regles.py
+# regles_ia.py
 
 import random
 import sys
@@ -128,7 +128,7 @@ def finalitzar_torn():
     fase_de_mercat()
     
     # 2. Preparació del nou torn
-    if ESTAT_JOC["torn_actual"] < 9:
+    if ESTAT_JOC["torn_actual"] <= 9:
         ESTAT_JOC["torn_actual"] += 1
         ESTAT_JOC["punts_accio_disponibles"] = ESTAT_JOC["brokers"] * 1
         # ... (Altres preparacions, com la Fase de Desenvolupament)
