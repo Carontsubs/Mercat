@@ -27,7 +27,7 @@ def inicialitzar_joc():
         "cicle_actual": 1, 
 
         # Recursos
-        "efectiu": 3, 
+        "efectiu": 0, 
         "deute_tokens": 0, 
 
         # Capacitat Operativa
@@ -40,8 +40,10 @@ def inicialitzar_joc():
         # Estratègies (Cartes de Desenvolupament)
         "estrategies": [],
 
-        # 🛑 CORRECCIÓ CLAU: Nova llista per registrar accions base
+        # 🛑 REGISTRES
         "accions_executades": [], # ⬅️ AFEGIR AQUÍ
+        "registre_co_total": 0, # ⬅️ NOU: CO acumulat total
+        "registre_deute_adquirit": 0,
     }
 
     global SILENT_MODE
@@ -104,7 +106,9 @@ def fase_de_mercat():
     cicle = obtenir_cicle_actual()
     # (El cost_operatiu_total depèn de variables que no estan aquí, p. ex., brokers * cost_base)
     cost_operatiu_total = ESTAT_JOC["brokers"] * 2 # Exemple: 2€ per broker
-    
+    ESTAT_JOC["registre_co_total"] += cost_operatiu_total
+
+    tokens_adquirits = 0
     if ESTAT_JOC["efectiu"] >= cost_operatiu_total:
         # Pagar CO
         ESTAT_JOC["efectiu"] -= cost_operatiu_total
@@ -122,7 +126,8 @@ def fase_de_mercat():
         ESTAT_JOC["deute_tokens"] += tokens_adquirits
         ESTAT_JOC["efectiu"] = 0 
         # ... (Missatges de deute)
-        
+    
+    ESTAT_JOC["registre_deute_adquirit"] += tokens_adquirits   
 
 def finalitzar_torn():
     """Executa les fases de Tancament i prepara el següent torn."""

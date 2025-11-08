@@ -31,6 +31,7 @@ def ingresar_basic():
     if usar_ap(1):
         guany = 2
         regles.ESTAT_JOC["efectiu"] += guany
+        regles.ESTAT_JOC["comptador_ingres_basic"] += 1
         if not regles.SILENT_MODE:
             print(f"💰 Acció realitzada: Ingrés Bàsic. Guanyes {guany} €.")
         return True
@@ -96,7 +97,17 @@ def comprar_desenvolupament():
     efectiu = regles.ESTAT_JOC["efectiu"]
     accions_a = regles.ESTAT_JOC["accions"]["A"]
     brokers = regles.ESTAT_JOC["brokers"]
+    fons_count = regles.ESTAT_JOC["estrategies"].count("Fons Diversificat")
+    # 🛑 PAS CLAU: Definició de variables de les cartes i comptes
+    analista_junior = CARTES_DESENVOLUPAMENT["1"]
+    algoritme = CARTES_DESENVOLUPAMENT["2"]
+    fons_diversificat = CARTES_DESENVOLUPAMENT["3"]
     
+    # Recompte de cartes actuals:
+    algoritme_count = regles.ESTAT_JOC["estrategies"].count(algoritme["nom"])
+    analista_count = regles.ESTAT_JOC["estrategies"].count(analista_junior["nom"])
+    fons_count = regles.ESTAT_JOC["estrategies"].count(fons_diversificat["nom"])
+
     # 1. Comprovar si hi ha alguna carta disponible i pagable (assumint CARTES_DESENVOLUPAMENT existeix)
     cartes_pagables = [
          c for c in CARTES_DESENVOLUPAMENT.values() 
@@ -107,29 +118,34 @@ def comprar_desenvolupament():
         # No hi ha cartes pagables, l'acció falla i no consumeix AP
         return False
 
+    
     carta_tria = None
-    
-    # --- LÒGICA DE TRIA D'IA ESTRATÈGICA ---
-    
-    # 2. PRIORITAT 1: FONS DIVERSIFICAT (Si es compleix la condició de 3+ Accions A)
-    fons_diversificat = next((c for c in cartes_pagables if c['nom'] == "Fons Diversificat"), None)
-    
-    if fons_diversificat and accions_a >= 4:
-        carta_tria = fons_diversificat
-    
-    # 3. PRIORITAT 2: ANALISTA JUNIOR (Si no s'ha triat Fons Diversificat)
-    if not carta_tria:
-         analista_junior = next((c for c in cartes_pagables if c['nom'] == "Analista Junior"), None)
-         if analista_junior and brokers < 3:
-             carta_tria = analista_junior
-             
-    # 4. TRIA FINAL (Si encara no s'ha triat, pot triar l'Algoritme si és l'únic que queda)
-    if not carta_tria:
-        # Triar a l'atzar entre les pagables com a últim recurs.
-        carta_tria = random.choice(cartes_pagables)
+    MAX_JUN = 2 
+    MAX_ALG = 1 
+    MAX_FONS = 3 # Només 2 Fons a la prioritat alta
 
-    # --- EXECUCIÓ DE LA COMPRA (Si s'ha triat una carta) ---
-    
+    # 1. 🥇 PRIORITAT MÀXIMA: ANALISTA JUNIOR (Capacitat - Preparació per al préstec)
+    # La compra s'intentarà fer a la funció superior amb la lògica de préstec.
+    # Aquí només el seleccionem si hi ha efectiu.
+    if analista_count < MAX_JUN and efectiu >= 4:
+        carta_tria = analista_junior
+            
+    # 2. 🥈 PRIORITAT ALTA: FONS DIVERSIFICAT (Guany Agressiu)
+    # Comprem Fons Diversificat dues vegades (cost 2 €) per generar ingressos ràpidament.
+    elif fons_count < MAX_FONS and accions_a >= 5 and efectiu >= 2:
+        carta_tria = fons_diversificat
+                
+    # 3. 🥉 PRIORITAT MITJANA: ALGORITME (Defensa del CO)
+    # El comprem un cop hem assegurat la capacitat i hem començat a invertir en guany.
+    elif algoritme_count < MAX_ALG and efectiu >= 3:
+        carta_tria = algoritme
+                
+    # 4. 🏅 PRIORITAT BAIXA: FONS DIVERSIFICAT (Fins al límit)
+    # Si no podem fer res més, seguim comprant Fons (cost 2 €) perquè és la carta més barata.
+    elif fons_count < 3 and accions_a >= 5 and efectiu >= 2:
+        carta_tria = fons_diversificat
+
+
     if carta_tria:
         # Consumir AP (Ho has de gestionar amb la funció 'usar_ap')
         if not usar_ap(1):
