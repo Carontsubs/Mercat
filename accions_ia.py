@@ -120,32 +120,24 @@ def comprar_desenvolupament():
 
     
     carta_tria = None
-    MAX_JUN = 2 
-    MAX_ALG = 1 
-    MAX_FONS = 3 # Només 2 Fons a la prioritat alta
+# 🛑 NOU: Límits Segons l'Estratègia V79
+    MAX_JUN = 2 # Només 1 Junior en tota la partida
+    MAX_FONS = 1 # Només 1 Fons Diversificat en tota la partida
+    MAX_ALG = 0 # 🛑 L'estratègia no permet Algoritme
 
-    # 1. 🥇 PRIORITAT MÀXIMA: ANALISTA JUNIOR (Capacitat - Preparació per al préstec)
-    # La compra s'intentarà fer a la funció superior amb la lògica de préstec.
-    # Aquí només el seleccionem si hi ha efectiu.
-    if analista_count < MAX_JUN and efectiu >= 4:
+    carta_tria = None
+
+    # 1. 🥇 PRIORITAT MÀXIMA: ANALISTA JUNIOR (Si no en tenim cap)
+    if analista_count < MAX_JUN and efectiu >= analista_junior["cost"]:
         carta_tria = analista_junior
             
-    # 2. 🥈 PRIORITAT ALTA: FONS DIVERSIFICAT (Guany Agressiu)
-    # Comprem Fons Diversificat dues vegades (cost 2 €) per generar ingressos ràpidament.
-    elif fons_count < MAX_FONS and accions_a >= 5 and efectiu >= 2:
+    # 2. 🥈 PRIORITAT ALTA: FONS DIVERSIFICAT (Si no en tenim cap)
+    elif fons_count < MAX_FONS and efectiu >= fons_diversificat["cost"]:
+        # No cal la condició accions_a >= 5 perquè l'estratègia obliga a comprar-lo
         carta_tria = fons_diversificat
                 
-    # 3. 🥉 PRIORITAT MITJANA: ALGORITME (Defensa del CO)
-    # El comprem un cop hem assegurat la capacitat i hem començat a invertir en guany.
-    elif algoritme_count < MAX_ALG and efectiu >= 3:
-        carta_tria = algoritme
-                
-    # 4. 🏅 PRIORITAT BAIXA: FONS DIVERSIFICAT (Fins al límit)
-    # Si no podem fer res més, seguim comprant Fons (cost 2 €) perquè és la carta més barata.
-    elif fons_count < 3 and accions_a >= 5 and efectiu >= 2:
-        carta_tria = fons_diversificat
-
-
+    # 3. 🥉 PRIORITAT MITJANA: Altres (Algoritme) - BLOQUEJADES
+    # Aquesta secció s'elimina o es bloqueja amb MAX_ALG=0
     if carta_tria:
         # Consumir AP (Ho has de gestionar amb la funció 'usar_ap')
         if not usar_ap(1):
